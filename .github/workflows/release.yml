@@ -22,6 +22,8 @@
 # you never have to touch or re-share after the first time.
 
 name: Build and Release
+permissions:
+  contents: write
 
 on:
   push:
