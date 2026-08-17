@@ -1,0 +1,17 @@
+# Core dependency: Docker SDK for Python.
+# backends.py tries `import docker` first and falls back automatically
+# to shelling out to the `docker` CLI if this isn't installed, so the
+# app still works even without it -- but installing it gives cleaner
+# error messages and avoids spawning a subprocess per call.
+docker>=7.0.0
+
+# Not required as a pip package: OpenShift support uses the `oc` CLI
+# directly via subprocess (per the assignment's tip that this is faster
+# to get working than the kubernetes client library), so no extra
+# package is needed for Task 6/7 beyond having `oc` on PATH and being
+# logged in with `oc login`.
+#
+# tkinter (GUI toolkit) ships with the standard Python installer on
+# Windows/macOS. On Linux it is a separate OS package, e.g.:
+#   Ubuntu/Debian: sudo apt install python3-tk
+#   Fedora:        sudo dnf install python3-tkinter
