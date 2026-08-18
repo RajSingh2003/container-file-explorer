@@ -21,7 +21,7 @@
 ; fallback default here.
 
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.1"
+  #define MyAppVersion "1.0.2"
 #endif
 
 #define MyAppName "ContainerExplorer"

@@ -11,4 +11,4 @@ value against the latest GitHub release tag to tell users when a newer
 version is available.
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
