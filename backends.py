@@ -32,8 +32,53 @@ import json
 import os
 import subprocess
 import shutil
+import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+
+# On Windows, subprocess.run() spawning a console program (docker.exe,
+# oc.exe) makes Windows attach a brand-new console window to that child
+# process by default - this is what causes a black CMD window to flash
+# on screen for every single background action, even though this app's
+# own window has no console (it's built with PyInstaller --windowed).
+# CREATE_NO_WINDOW tells Windows not to give the child process a console
+# at all. It only exists on Windows, so it's 0 (a no-op flag) elsewhere.
+_NO_WINDOW_FLAG = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+
+
+def _run(cmd: List[str], timeout: int = 30, cwd: Optional[str] = None) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd,
+            creationflags=_NO_WINDOW_FLAG,
+        )
+    except FileNotFoundError as exc:
+        raise BackendError(
+            f"Command not found: '{cmd[0]}'. Is it installed and on your PATH?"
+        ) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise BackendError(f"Command timed out: {' '.join(cmd)}") from exc
+
+
+def _run_binary(
+    cmd: List[str], timeout: int = 60, input_bytes: Optional[bytes] = None
+) -> subprocess.CompletedProcess:
+    """Like _run, but works in bytes rather than text - used for streaming
+    a file's raw content through `... cat`/`... sh -c "cat > x"` fallbacks,
+    where decoding as UTF-8 text would corrupt binary files."""
+    try:
+        return subprocess.run(
+            cmd, capture_output=True, timeout=timeout, input=input_bytes,
+            creationflags=_NO_WINDOW_FLAG,
+        )
+    except FileNotFoundError as exc:
+        raise BackendError(
+            f"Command not found: '{cmd[0]}'. Is it installed and on your PATH?"
+        ) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise BackendError(f"Command timed out: {' '.join(cmd)}") from exc
+
+
 
 
 # --------------------------------------------------------------------------
