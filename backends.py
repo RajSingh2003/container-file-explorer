@@ -154,37 +154,6 @@ def parse_ls_la(output: str) -> List[FileEntry]:
     return entries
 
 
-def _run(cmd: List[str], timeout: int = 30, cwd: Optional[str] = None) -> subprocess.CompletedProcess:
-    try:
-        return subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout, cwd=cwd
-        )
-    except FileNotFoundError as exc:
-        raise BackendError(
-            f"Command not found: '{cmd[0]}'. Is it installed and on your PATH?"
-        ) from exc
-    except subprocess.TimeoutExpired as exc:
-        raise BackendError(f"Command timed out: {' '.join(cmd)}") from exc
-
-
-def _run_binary(
-    cmd: List[str], timeout: int = 60, input_bytes: Optional[bytes] = None
-) -> subprocess.CompletedProcess:
-    """Like _run, but works in bytes rather than text - used for streaming
-    a file's raw content through `... cat`/`... sh -c "cat > x"` fallbacks,
-    where decoding as UTF-8 text would corrupt binary files."""
-    try:
-        return subprocess.run(
-            cmd, capture_output=True, timeout=timeout, input=input_bytes
-        )
-    except FileNotFoundError as exc:
-        raise BackendError(
-            f"Command not found: '{cmd[0]}'. Is it installed and on your PATH?"
-        ) from exc
-    except subprocess.TimeoutExpired as exc:
-        raise BackendError(f"Command timed out: {' '.join(cmd)}") from exc
-
-
 # `oc cp` / `docker cp` copy directories by running `tar` *inside* the
 # target container and streaming/unpacking the archive. Minimal or
 # distroless images often don't ship `tar`, so that step fails with a
