@@ -24,7 +24,7 @@
   #define MyAppVersion "1.0.1"
 #endif
 
-#define MyAppName "ContainerExplorer"
+#define MyAppName "Hatch"
 #define MyAppPublisher "RajWorks"
 #define MyAppExeName "ContainerExplorer.exe"
 

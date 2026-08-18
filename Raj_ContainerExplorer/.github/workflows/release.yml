@@ -1,0 +1,72 @@
+# .github/workflows/release.yml
+#
+# Automates the entire "cut a new release" process. Trigger it by
+# tagging a commit:
+#
+#     git tag v1.1.0
+#     git push --tags
+#
+# GitHub then, on a clean Windows runner:
+#   1. Checks out the code
+#   2. Installs Python + this project's dependencies + PyInstaller
+#   3. Freezes gui_explorer.py into a standalone ContainerExplorer.exe
+#      (bundles the Python interpreter itself - end users don't need
+#      Python installed at all)
+#   4. Installs Inno Setup and compiles installer.iss into
+#      ContainerExplorer-Setup.exe, passing this tag's version number
+#      through so the installer and version.py never drift apart
+#   5. Publishes that installer as a GitHub Release asset
+#
+# End result: https://github.com/<you>/<repo>/releases/latest/download/ContainerExplorer-Setup.exe
+# always points at the newest build - one stable link, forever, that
+# you never have to touch or re-share after the first time.
+
+name: Build and Release
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Extract version from tag
+        id: version
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build standalone .exe with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --name ContainerExplorer gui_explorer.py
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Compile installer
+        run: |
+          iscc /DMyAppVersion=${{ steps.version.outputs.version }} installer.iss
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Output/ContainerExplorer-Setup.exe
+          generate_release_notes: true
